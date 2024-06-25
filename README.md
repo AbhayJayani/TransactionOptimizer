@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Cash Flow Minimizer System is a C++ program that optimizes and minimizes transactions among multiple banks using different payment modes.
+The Cash Flow Minimizer System optimizes and minimizes transactions among multiple banks using different payment modes.
 
 ## Features
 
