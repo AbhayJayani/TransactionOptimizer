@@ -72,7 +72,7 @@ The goal, then, in the general case is to take a debt graph and simplify it (i.e
 
 
 # Splitwise 
-https://user-images.githubusercontent.com/56497318/127523960-86589587-376e-41a4-867d-805c6c7cf300.mp4
+[https://user-images.githubusercontent.com/56497318/127523960-86589587-376e-41a4-867d-805c6c7cf300.mp4](https://github.com/user-attachments/assets/3314e18e-e5ff-4e65-8acd-94a2ae145d27)
 
 
 ### Description
