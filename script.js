@@ -1,138 +1,141 @@
-// JavaScript code integrated with C++ logic
-const bankForm = document.getElementById('bank-form');
-const transactionForm = document.getElementById('transaction-form');
-const bankListContainer = document.getElementById('bank-list');
-const transactionListContainer = document.getElementById('transaction-list');
-const outputSection = document.getElementById('output-section');
-const outputDiv = document.getElementById('output');
-const submitButton = document.getElementById('submit-btn'); // Added submit button reference
+import { BinaryHeap } from './heap.js';
 
-let banks = [];
-let transactions = [];
-
-bankForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const numBanks = parseInt(document.getElementById('num-banks').value);
-    banks = []; // Clear previous data
-    bankListContainer.innerHTML = ''; // Clear previous list items
-    for (let i = 0; i < numBanks; i++) {
-        const bankItem = document.createElement('div');
-        bankItem.className = 'bank-item';
-
-        const bankNameInput = document.createElement('input');
-        bankNameInput.type = 'text';
-        bankNameInput.placeholder = 'Bank Name';
-        bankNameInput.required = true;
-        bankItem.appendChild(bankNameInput);
-
-        const numTypesInput = document.createElement('input');
-        numTypesInput.type = 'number';
-        numTypesInput.placeholder = 'Number of Payment Modes';
-        numTypesInput.required = true;
-        bankItem.appendChild(numTypesInput);
-
-        const paymentModesInput = document.createElement('input');
-        paymentModesInput.type = 'text';
-        paymentModesInput.placeholder = 'Payment Modes (comma separated)';
-        paymentModesInput.required = true;
-        bankItem.appendChild(paymentModesInput);
-
-        bankListContainer.appendChild(bankItem);
-
-        banks.push({
-            name: '',
-            numTypes: 0,
-            types: new Set(),
-        });
-    }
-});
-
-transactionForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const numTransactions = parseInt(document.getElementById('num-transactions').value);
-    transactions = []; // Clear previous data
-    transactionListContainer.innerHTML = ''; // Clear previous list items
-    for (let i = 0; i < numTransactions; i++) {
-        const transactionItem = document.createElement('div');
-        transactionItem.className = 'transaction-item';
-
-        const debtorInput = document.createElement('input');
-        debtorInput.type = 'text';
-        debtorInput.placeholder = 'Debtor Bank';
-        debtorInput.required = true;
-        transactionItem.appendChild(debtorInput);
-
-        const creditorInput = document.createElement('input');
-        creditorInput.type = 'text';
-        creditorInput.placeholder = 'Creditor Bank';
-        creditorInput.required = true;
-        transactionItem.appendChild(creditorInput);
-
-        const amountInput = document.createElement('input');
-        amountInput.type = 'number';
-        amountInput.placeholder = 'Amount';
-        amountInput.required = true;
-        transactionItem.appendChild(amountInput);
-
-        transactionListContainer.appendChild(transactionItem);
-
-        transactions.push({
-            debtor: '',
-            creditor: '',
-            amount: 0,
-        });
-    }
-});
-
-bankForm.addEventListener('change', () => {
-    banks = [];
-    const bankItems = document.querySelectorAll('.bank-item');
-    bankItems.forEach((item, index) => {
-        const bankNameInput = item.querySelector('input[type="text"]');
-        const numTypesInput = item.querySelector('input[type="number"]');
-        const paymentModesInput = item.querySelector('input[type="text"]');
-
-        banks.push({
-            name: bankNameInput.value,
-            numTypes: parseInt(numTypesInput.value),
-            types: new Set(paymentModesInput.value.split(',').map(mode => mode.trim())),
-        });
-    });
-});
-
-transactionForm.addEventListener('change', () => {
-    transactions = [];
-    const transactionItems = document.querySelectorAll('.transaction-item');
-    transactionItems.forEach((item, index) => {
-        const debtorInput = item.querySelector('input[placeholder="Debtor Bank"]');
-        const creditorInput = item.querySelector('input[placeholder="Creditor Bank"]');
-        const amountInput = item.querySelector('input[placeholder="Amount"]');
-
-        transactions.push({
-            debtor: debtorInput.value,
-            creditor: creditorInput.value,
-            amount: parseInt(amountInput.value),
-        });
-    });
-});
-
-submitButton.addEventListener('click', () => {
-    // Prepare data to send to server
-    const bankDetails = JSON.stringify(banks);
-    const transactionDetails = JSON.stringify(transactions);
-
-    // Send data to server using AJAX
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'minimize_cash_flow.cpp', true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.onload = () => {
-        if (xhr.status === 200) {
-            outputDiv.textContent = xhr.responseText;
-            outputSection.style.display = 'block';
-        } else {
-            outputDiv.textContent = 'Error: ' + xhr.statusText;
-            outputSection.style.display = 'block';
+onload = function () {
+    // create a network
+    let curr_data; 
+    const container = document.getElementById('mynetwork');
+    const container2 = document.getElementById('mynetwork2');
+    const genNew = document.getElementById('generate-graph');
+    const solve = document.getElementById('solve');
+    const temptext = document.getElementById('temptext');
+    
+    // initialise graph options
+    const options = {
+        edges: {
+            arrows: {
+                to: true
+            },
+            labelHighlightBold: true,
+            font: {
+                size: 20
+            }
+        },
+        nodes: {
+            font: '12px arial black',
+            scaling: {
+                label: true
+            },
+            shape: 'icon',
+            icon: {
+                face: 'FontAwesome',
+                code: '\uf19c', 
+                size: 50,
+                color: 'black',
+            }
         }
     };
-    xhr.send(JSON.stringify({ bankDetails: banks, transactionDetails: transactions }));
-});
+    
+    // initialize your network!
+    let network = new vis.Network(container);
+    network.setOptions(options);
+    let network2 = new vis.Network(container2);
+    network2.setOptions(options);
+
+    function createData(){
+        const sz = Math.floor(Math.random() * 8) + 2;
+
+        // Adding banks to nodes array
+        let nodes = [];
+        for(let i = 1; i <= sz; i++){
+            nodes.push({id: i, label: "Bank " + i})
+        }
+        nodes = new vis.DataSet(nodes);
+
+        // Dynamically creating edges with random amount to be paid from one to another bank
+        const edges = [];
+        for(let i = 1; i <= sz; i++){
+            for(let j = i + 1; j <= sz; j++){
+                // Modifies the amount of edges added in the graph
+                if(Math.random() > 0.5){
+                    // Controls the direction of cash flow on edge
+                    if(Math.random() > 0.5)
+                        edges.push({from: i, to: j, label: String(Math.floor(Math.random()*100)+1)});
+                    else
+                        edges.push({from: j, to: i, label: String(Math.floor(Math.random()*100)+1)});
+                }
+            }
+        }
+        const data = {
+            nodes: nodes,
+            edges: edges
+        };
+        return data;
+    }
+
+    genNew.onclick = function () {
+        const data = createData();
+        curr_data = data;
+        network.setData(data);
+        temptext.style.display = "inline";
+        container2.style.display = "none";
+    };
+
+    solve.onclick = function () {
+        temptext.style.display  = "none";
+        container2.style.display = "inline";
+        const solvedData = solveData();
+        network2.setData(solvedData);
+    };
+
+    function solveData() {
+        let data = curr_data;
+        const sz = data['nodes'].length;
+        const vals = Array(sz).fill(0);
+        // Calculating net balance of each bank
+        for(let i = 0; i < data['edges'].length; i++) {
+            const edge = data['edges'][i];
+            vals[edge['to'] - 1] += parseInt(edge['label']);
+            vals[edge['from'] - 1] -= parseInt(edge['label']);
+        }
+
+        const pos_heap = new BinaryHeap();
+        const neg_heap = new BinaryHeap();
+
+        for(let i = 0; i < sz; i++){
+            if(vals[i] > 0){
+                pos_heap.insert([vals[i], i]);
+            } else{
+                neg_heap.insert([-vals[i], i]);
+                vals[i] *= -1;
+            }
+        }
+
+        const new_edges = [];
+        while(!pos_heap.empty() && !neg_heap.empty()){
+            const mx = pos_heap.extractMax();
+            const mn = neg_heap.extractMax();
+
+            const amt = Math.min(mx[0], mn[0]);
+            const to = mx[1];
+            const from = mn[1];
+
+            new_edges.push({from: from + 1, to: to + 1, label: String(Math.abs(amt))});
+            vals[to] -= amt;
+            vals[from] -= amt;
+
+            if(mx[0] > mn[0]){
+                pos_heap.insert([vals[to], to]);
+            } else if(mx[0] < mn[0]){
+                neg_heap.insert([vals[from], from]);
+            }
+        }
+
+        data = {
+            nodes: data['nodes'],
+            edges: new_edges
+        };
+        return data;
+    }
+
+    genNew.click();
+};
